@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        body {
+            background-color: #f2f0f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #0a0027;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #5c5374;
+            margin-bottom: 20px;
+        }
+
+        #board {
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #f2f0f7;
+        }
+
+        #board tr td {
+            border: 1px solid #f2f0f7;
+            background: #9e92b5;
+            width: 40px;
+            height: 40px;
+            transition: background-color 0.2s ease, transform 0.1s ease; /* 애니메이션 효과(확대, 생상) */
+            cursor: pointer;/* 마우스를 올렸을 때 커서를 포인터 모양으로 변경 */
+        }
+
+        #board tr td:hover {
+            transform: scale(1.05);
+        }
+
+        #board tr td.clicked {
+            background: #473766;
+            color: white;
+            font-weight: bold;
+        }
+
+        #board tr td.mine {
+            background: #8200f4;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #8066b4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;/* 애니메이션 효과(색상) */
+        }
+
+        button:hover {
+            background-color: #8200f4;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>지뢰찾기</h1>
+    <p>지뢰 수: <span id="mine-count"></span></p>
+    <table id="board"></table>
+    <button onclick="genGrid();">새로운 게임</button>
+    <script>
+        let grid = document.getElementById("board");
+        let mineCountElement = document.getElementById("mine-count"); /* 지뢰 수 표시 요소 */
+        let boardSize = 8;
+        let board = [];
+
+        let mineCount = 0;/* 지뢰 수 */
+
+        genGrid();
+
+        function genGrid() {
+            mineCount = 0;
+            board = [];
+            count = 64; /* 지뢰가 아닌 셀의 수  */
+            grid.innerHTML = "";
+
+            for (let i = 0; i < boardSize; i++) {
+                let row = grid.insertRow(i);
+                let boardRow = [];
+                for (let j = 0; j < boardSize; j++) {
+                    let cell = row.insertCell(j);
+                    cell.onclick = function () { clickBox(this, i, j); };
+                    let mine = Math.random() < 0.05;
+                    boardRow.push({ mine: mine, clicked: false });
+
+                    if (mine) {
+                        mineCount++;
+                        count--;
+                    } /* 만약 생성된 게 지뢰일 시, 지뢰 수를 증가시키고 지뢰가 아닌 셀의 수를 감소 */
+                }
+                board.push(boardRow);
+            }
+            updateMineCount();
+        }
+
+        function updateMineCount() {
+            mineCountElement.textContent = mineCount;/* 지뢰 수를 화면에 표시 */
+        }
+
+        function clickBox(cell, x, y) {
+            if (cell.classList.contains('clicked')) return;
+
+            if (board[x][y].mine) {
+                cell.className = "mine";
+                alert("지뢰를 눌렀습니다! 게임이 종료됩니다.");
+                location.reload();/* 창 재시작 */
+            } else {
+                cell.className = "clicked";
+                count--;
+                let adjacentMines = countAdjacentMines(x, y);
+                if (adjacentMines > 0) {
+                    cell.textContent = adjacentMines;
+                }
+                if (count == 0) {
+                    alert("성공했습니다! 게임이 종료됩니다.");
+                    location.reload();/* 창 재시작 */
+                }
+            }
+        }
+
+        function countAdjacentMines(x, y) {
+            let count = 0; /* 인접한 지뢰 개수 */
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) { 
+                    let newX = x + i;
+                    let newY = y + j; /* 현재 셀을 (0,0)이라고 할 때, 주변 8칸을 확인*/
+                    if (newX >= 0 && newX < boardSize && newY >= 0 && newY < boardSize && board[newX][newY].mine) {
+                        count++;
+                    } /* 범위 안에 벗어나지 않을 때, 지뢰가 있는 지 확인 */
+                }
+            }
+            return count;
+        }
+    </script>
+</body>
+
+</html>
